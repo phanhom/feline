@@ -1,0 +1,12 @@
+[submodule "feline-deploy"]
+	path = feline-deploy
+	url = https://github.com/phanhom/feline-deploy.git
+[submodule "feline-monitor"]
+	path = feline-monitor
+	url = https://github.com/phanhom/feline-monitor.git
+[submodule "feline-plugin"]
+	path = feline-plugin
+	url = https://github.com/phanhom/feline.git
+[submodule "feline-server"]
+	path = feline-server
+	url = https://github.com/phanhom/feline-server.git
