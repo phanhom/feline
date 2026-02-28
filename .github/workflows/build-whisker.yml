@@ -1,0 +1,217 @@
+name: Build Whisker Server
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'feline-plugin/packages/whisker/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'feline-plugin/packages/whisker/**'
+  workflow_dispatch:
+
+jobs:
+  build-macos-arm64:
+    runs-on: macos-14  # Apple Silicon
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        cd feline-plugin/packages/whisker
+        python -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build binary
+      run: |
+        cd feline-plugin/packages/whisker
+        source venv/bin/activate
+        pyinstaller whisker.spec --distpath dist/binaries/darwin-arm64 --workpath build/darwin-arm64
+        cp dist/binaries/darwin-arm64/whisker-server dist/binaries/whisker-server-darwin-arm64
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: whisker-darwin-arm64
+        path: feline-plugin/packages/whisker/dist/binaries/whisker-server-darwin-arm64
+
+  build-macos-x64:
+    runs-on: macos-13  # Intel
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        cd feline-plugin/packages/whisker
+        python -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build binary
+      run: |
+        cd feline-plugin/packages/whisker
+        source venv/bin/activate
+        pyinstaller whisker.spec --distpath dist/binaries/darwin-x64 --workpath build/darwin-x64
+        cp dist/binaries/darwin-x64/whisker-server dist/binaries/whisker-server-darwin-x64
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: whisker-darwin-x64
+        path: feline-plugin/packages/whisker/dist/binaries/whisker-server-darwin-x64
+
+  build-linux-x64:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd feline-plugin/packages/whisker
+        python -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build binary
+      run: |
+        cd feline-plugin/packages/whisker
+        source venv/bin/activate
+        pyinstaller whisker.spec --distpath dist/binaries/linux-x64 --workpath build/linux-x64
+        cp dist/binaries/linux-x64/whisker-server dist/binaries/whisker-server-linux-x64
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: whisker-linux-x64
+        path: feline-plugin/packages/whisker/dist/binaries/whisker-server-linux-x64
+
+  build-linux-arm64:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
+    
+    - name: Build in ARM64 container
+      run: |
+        docker run --rm --platform linux/arm64 \
+          -v ${{ github.workspace }}:/workspace \
+          -w /workspace/feline-plugin/packages/whisker \
+          python:3.12-slim \
+          bash -c "
+            pip install -r requirements.txt pyinstaller &&
+            pyinstaller whisker.spec --distpath dist/binaries/linux-arm64 --workpath build/linux-arm64
+          "
+        cp feline-plugin/packages/whisker/dist/binaries/linux-arm64/whisker-server feline-plugin/packages/whisker/dist/binaries/whisker-server-linux-arm64
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: whisker-linux-arm64
+        path: feline-plugin/packages/whisker/dist/binaries/whisker-server-linux-arm64
+
+  build-windows-x64:
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd feline-plugin/packages/whisker
+        python -m venv venv
+        venv\Scripts\activate
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build binary
+      run: |
+        cd feline-plugin/packages/whisker
+        venv\Scripts\activate
+        pyinstaller whisker.spec --distpath dist/binaries/win32-x64 --workpath build/win32-x64
+        copy dist\binaries\win32-x64\whisker-server.exe dist\binaries\whisker-server-win32-x64.exe
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: whisker-win32-x64
+        path: feline-plugin/packages/whisker/dist/binaries/whisker-server-win32-x64.exe
+
+  build-windows-arm64:
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd feline-plugin/packages/whisker
+        python -m venv venv
+        venv\Scripts\activate
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build binary
+      run: |
+        cd feline-plugin/packages/whisker
+        venv\Scripts\activate
+        pyinstaller whisker.spec --distpath dist/binaries/win32-arm64 --workpath build/win32-arm64
+        copy dist\binaries\win32-arm64\whisker-server.exe dist\binaries\whisker-server-win32-arm64.exe
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: whisker-win32-arm64
+        path: feline-plugin/packages/whisker/dist/binaries/whisker-server-win32-arm64.exe
+
+  # Optional: Combine all artifacts into a single release
+  release:
+    needs: [build-macos-arm64, build-macos-x64, build-linux-x64, build-linux-arm64, build-windows-x64, build-windows-arm64]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: binaries
+        merge-multiple: true
+    
+    - name: List binaries
+      run: ls -la binaries/
+    
+    # You can add release creation here if needed
+    # - name: Create Release
+    #   uses: softprops/action-gh-release@v1
+    #   with:
+    #     files: binaries/*
